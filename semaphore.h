@@ -31,26 +31,3 @@
       // ...
     }
   };
-
-  // Binary Semaphore
-  class Binary_Semaphore {
-  private:
-    std::mutex mtx;
-    std::condition_variable conditionVariable;
-    // count is shared and should be protected
-    enum Value {
-      zero = 0, one = 1
-    };
-
-  public:
-
-    void sem_wait() {
-      std::unique_lock<std::mutex> locker(mtx);
-    
-    }
-
-    void sem_signal() {
-      std::unique_lock<std::mutex> locker(mtx);
-
-    }
-  };
