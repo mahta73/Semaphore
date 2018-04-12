@@ -2,32 +2,71 @@
   // Primitive Semaphore
   class Primitive_Semaphore {
   private:
-    std::mutex mtx;
-    std::condition_variable conditionVariable;
-    // count is shared and should be protected
-    mutable int count;
+  std::mutex mtx;
+  std::condition_variable conditionVariable;
+  // count is shared and should be protected
+  mutable int count;
 
   public:
-    explicit Semaphore(const int count)
-    : count(count) {};
+  explicit Primitive_Semaphore(int count)
+  : count(count) {};
 
-    void sem_wait() {
+  void sem_wait() {
+    std::unique_lock<std::mutex> locker(mtx);
+    this->count--;
+    if (this->count < 0) {
+      // block the process
+      conditionVariable.wait(locker);
+    }
+    // ...
+  }
+
+  void sem_signal() {
+    std::unique_lock<std::mutex> locker(mtx);
+    this->count++;
+    if (this->count <= 0) {
+      // unblock a process
+      conditionVariable.notify_one();
+    }
+    // ...
+    }
+  };
+
+
+  // Binary Semaphore
+  class Binary_Semaphore {
+  public:
+    std::mutex mtx;
+    std::condition_variable conditionVariable;
+    int count; // count of blocked processes
+    enum Value {
+      zero, one
+    };
+    Value value;
+
+  public:
+    explicit Binary_Semaphore()
+    : value(one), count(0) {};
+
+    void wait() {
       std::unique_lock<std::mutex> locker(mtx);
-      this->count--;
-      if (this->count < 0) {
-        // block the process
+      if (this->value == one) {
+        this->value = zero;
+      } else {
+        this->count++;
+        // block a process
         conditionVariable.wait(locker);
       }
-      // ...
-    }
+    };
 
-    void sem_signal() {
+    void signal() {
       std::unique_lock<std::mutex> locker(mtx);
-      this->count++;
-      if (this->count <= 0) {
+      if ( count <= 0) {
+        this->value = one;
+      } else {
+         this->count--;
         // unblock a process
         conditionVariable.notify_one();
       }
-      // ...
-    }
+    };
   };
